@@ -227,7 +227,7 @@ app = FastAPI()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-@app.post("api/v1/solve")
+@app.post("/api/v1/solve")
 async def solve(request: Request, auction: Auction = Body(...)) -> SolutionResponse:
     # This is a placeholder implementation
     # In a real implementation, you would process the auction data and generate solutions
