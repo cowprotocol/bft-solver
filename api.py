@@ -226,10 +226,12 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("api")
 
 @app.post("/api/v1/solve", response_model=SolutionResponse)
-async def solve(request: Request, auction: Auction = Body(...)) -> SolutionResponse:
+#async def solve(request: Request, auction: Auction = Body(...)) -> SolutionResponse:
+async def solve(request: Request) -> SolutionResponse:
     # Log raw and parsed bodies for debugging (comment out in production if noisy)
     raw = await request.body()
     logger.info("Raw body: %s", raw.decode("utf-8", errors="ignore"))
+    return JSONResponse(content={"message": "OK"}, status_code=200)
     logger.info("Parsed auction keys: %s", list(auction.model_dump().keys()))
 
     # Placeholder solution
