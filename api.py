@@ -230,7 +230,8 @@ logger = logging.getLogger("api")
 async def solve(request: Request) -> SolutionResponse:
     # Log raw and parsed bodies for debugging (comment out in production if noisy)
     raw = await request.body()
-    logger.info("Raw body: %s", raw.decode("utf-8", errors="ignore"))
+    body = json.loads(raw)
+    logger.info(f"Received request json with keys: {list(body.keys())}")
     return JSONResponse(content={"message": "OK"}, status_code=200)
     logger.info("Parsed auction keys: %s", list(auction.model_dump().keys()))
 
