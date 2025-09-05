@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Body, Request
 from fastapi.responses import JSONResponse
-from typing import Dict, List, Optional, Union, Literal, Any
-from pydantic import BaseModel, Field
+from typing import Dict, List, Optional, Union, Literal, Any, Annotated
+from pydantic import BaseModel, Field, ConfigDict
 from enum import Enum
 import logging
 
@@ -22,8 +22,12 @@ class U256(str):
     """256 bit unsigned integer in decimal notation."""
     pass
 
+# Configure BaseModel to allow arbitrary types
+class CustomBaseModel(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
 # TokenInfo Model
-class TokenInfo(BaseModel):
+class TokenInfo(CustomBaseModel):
     decimals: Optional[int] = None
     symbol: Optional[str] = None
     referencePrice: Optional[str] = None
@@ -54,23 +58,23 @@ class SigningScheme(str, Enum):
     preSign = "preSign"
     eip1271 = "eip1271"
 
-class InteractionData(BaseModel):
+class InteractionData(CustomBaseModel):
     target: Address
     value: TokenAmount
     callData: str
 
-class FlashloanHint(BaseModel):
+class FlashloanHint(CustomBaseModel):
     lender: Address
     borrower: Address
     token: Token
     amount: TokenAmount
 
-class FeePolicy(BaseModel):
+class FeePolicy(CustomBaseModel):
     kind: str
     maxVolumeFactor: Optional[float] = None
     factor: Optional[float] = None
 
-class Order(BaseModel):
+class Order(CustomBaseModel):
     uid: str
     sellToken: Token
     buyToken: Token
@@ -102,12 +106,12 @@ class LiquidityKind(str, Enum):
     concentratedLiquidity = "concentratedLiquidity"
     limitOrder = "limitOrder"
 
-class TokenReserve(BaseModel):
+class TokenReserve(CustomBaseModel):
     balance: TokenAmount
     weight: Optional[str] = None
     scalingFactor: Optional[str] = None
 
-class LiquidityBase(BaseModel):
+class LiquidityBase(CustomBaseModel):
     id: str
     address: Address
     gasEstimate: str
@@ -159,7 +163,7 @@ Liquidity = Union[
 ]
 
 # Auction Model
-class Auction(BaseModel):
+class Auction(CustomBaseModel):
     id: Optional[str] = None
     tokens: Dict[str, TokenInfo]
     orders: List[Order]
@@ -169,17 +173,17 @@ class Auction(BaseModel):
     surplusCapturingJitOrderOwners: List[Address]
 
 # Solution Models
-class Trade(BaseModel):
+class Trade(CustomBaseModel):
     kind: str
     order: str
     executedAmount: TokenAmount
     fee: Optional[TokenAmount] = None
 
-class Asset(BaseModel):
+class Asset(CustomBaseModel):
     token: Token
     amount: TokenAmount
 
-class Interaction(BaseModel):
+class Interaction(CustomBaseModel):
     kind: str
     internalize: Optional[bool] = None
     id: Optional[str] = None
@@ -194,18 +198,18 @@ class Interaction(BaseModel):
     inputs: Optional[List[Asset]] = None
     outputs: Optional[List[Asset]] = None
 
-class Call(BaseModel):
+class Call(CustomBaseModel):
     target: Address
     value: TokenAmount
     callData: List[str]
 
-class Flashloan(BaseModel):
+class Flashloan(CustomBaseModel):
     lender: Address
     borrower: Address
     token: Token
     amount: TokenAmount
 
-class Solution(BaseModel):
+class Solution(CustomBaseModel):
     id: int
     prices: Dict[str, U256]
     trades: List[Trade]
@@ -215,7 +219,7 @@ class Solution(BaseModel):
     gas: Optional[int] = None
     flashloans: Optional[Dict[str, Flashloan]] = None
 
-class SolutionResponse(BaseModel):
+class SolutionResponse(CustomBaseModel):
     solutions: List[Solution]
 
 app = FastAPI()
