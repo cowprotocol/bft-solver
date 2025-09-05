@@ -1,40 +1,31 @@
+# api.py
 from fastapi import FastAPI, Body, Request
-from fastapi.responses import JSONResponse
 from typing import Dict, List, Optional, Union, Literal, Any, Annotated
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, StringConstraints
 from enum import Enum
 import logging
 
-# Token and Amount Models
-class Address(str):
-    """An Ethereum public address."""
-    pass
+# ------------------------------------------------------------------
+# Scalar type aliases (Pydantic v2-friendly; avoid subclassing str)
+# ------------------------------------------------------------------
+Address = Annotated[str, StringConstraints(pattern=r"^0x[0-9a-fA-F]{40}$")]
+Token = Address
+TokenAmount = Annotated[str, StringConstraints(pattern=r"^\d+$")]  # decimal digits only
+U256 = TokenAmount
 
-class Token(str):
-    """An ERC20 token address."""
-    pass
-
-class TokenAmount(str):
-    """Amount of an ERC20 token. 256 bit unsigned integer in decimal notation."""
-    pass
-
-class U256(str):
-    """256 bit unsigned integer in decimal notation."""
-    pass
-
-# Configure BaseModel to allow arbitrary types
-class CustomBaseModel(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-# TokenInfo Model
-class TokenInfo(CustomBaseModel):
+# ------------------------------------------------------------------
+# TokenInfo
+# ------------------------------------------------------------------
+class TokenInfo(BaseModel):
     decimals: Optional[int] = None
     symbol: Optional[str] = None
     referencePrice: Optional[str] = None
     availableBalance: TokenAmount
     trusted: bool
 
-# Order Models
+# ------------------------------------------------------------------
+# Orders
+# ------------------------------------------------------------------
 class OrderKind(str, Enum):
     sell = "sell"
     buy = "buy"
@@ -58,23 +49,23 @@ class SigningScheme(str, Enum):
     preSign = "preSign"
     eip1271 = "eip1271"
 
-class InteractionData(CustomBaseModel):
+class InteractionData(BaseModel):
     target: Address
     value: TokenAmount
     callData: str
 
-class FlashloanHint(CustomBaseModel):
+class FlashloanHint(BaseModel):
     lender: Address
     borrower: Address
     token: Token
     amount: TokenAmount
 
-class FeePolicy(CustomBaseModel):
+class FeePolicy(BaseModel):
     kind: str
     maxVolumeFactor: Optional[float] = None
     factor: Optional[float] = None
 
-class Order(CustomBaseModel):
+class Order(BaseModel):
     uid: str
     sellToken: Token
     buyToken: Token
@@ -98,7 +89,9 @@ class Order(CustomBaseModel):
     signingScheme: SigningScheme
     signature: str
 
-# Liquidity Models
+# ------------------------------------------------------------------
+# Liquidity
+# ------------------------------------------------------------------
 class LiquidityKind(str, Enum):
     constantProduct = "constantProduct"
     weightedProduct = "weightedProduct"
@@ -106,12 +99,12 @@ class LiquidityKind(str, Enum):
     concentratedLiquidity = "concentratedLiquidity"
     limitOrder = "limitOrder"
 
-class TokenReserve(CustomBaseModel):
+class TokenReserve(BaseModel):
     balance: TokenAmount
     weight: Optional[str] = None
     scalingFactor: Optional[str] = None
 
-class LiquidityBase(CustomBaseModel):
+class LiquidityBase(BaseModel):
     id: str
     address: Address
     gasEstimate: str
@@ -159,11 +152,13 @@ Liquidity = Union[
     WeightedProductPool,
     StablePool,
     ConcentratedLiquidityPool,
-    ForeignLimitOrder
+    ForeignLimitOrder,
 ]
 
-# Auction Model
-class Auction(CustomBaseModel):
+# ------------------------------------------------------------------
+# Auction (request) and Solution (response)
+# ------------------------------------------------------------------
+class Auction(BaseModel):
     id: Optional[str] = None
     tokens: Dict[str, TokenInfo]
     orders: List[Order]
@@ -172,18 +167,17 @@ class Auction(CustomBaseModel):
     deadline: str
     surplusCapturingJitOrderOwners: List[Address]
 
-# Solution Models
-class Trade(CustomBaseModel):
+class Trade(BaseModel):
     kind: str
     order: str
     executedAmount: TokenAmount
     fee: Optional[TokenAmount] = None
 
-class Asset(CustomBaseModel):
+class Asset(BaseModel):
     token: Token
     amount: TokenAmount
 
-class Interaction(CustomBaseModel):
+class Interaction(BaseModel):
     kind: str
     internalize: Optional[bool] = None
     id: Optional[str] = None
@@ -198,18 +192,18 @@ class Interaction(CustomBaseModel):
     inputs: Optional[List[Asset]] = None
     outputs: Optional[List[Asset]] = None
 
-class Call(CustomBaseModel):
+class Call(BaseModel):
     target: Address
     value: TokenAmount
     callData: List[str]
 
-class Flashloan(CustomBaseModel):
+class Flashloan(BaseModel):
     lender: Address
     borrower: Address
     token: Token
     amount: TokenAmount
 
-class Solution(CustomBaseModel):
+class Solution(BaseModel):
     id: int
     prices: Dict[str, U256]
     trades: List[Trade]
@@ -219,28 +213,35 @@ class Solution(CustomBaseModel):
     gas: Optional[int] = None
     flashloans: Optional[Dict[str, Flashloan]] = None
 
-class SolutionResponse(CustomBaseModel):
+class SolutionResponse(BaseModel):
     solutions: List[Solution]
 
+# ------------------------------------------------------------------
+# App + logging + route
+# ------------------------------------------------------------------
 app = FastAPI()
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("api")
 
-@app.post("/api/v1/solve")
+@app.post("/api/v1/solve", response_model=SolutionResponse)
 async def solve(request: Request, auction: Auction = Body(...)) -> SolutionResponse:
-    # This is a placeholder implementation
-    # In a real implementation, you would process the auction data and generate solutions
+    # Log raw and parsed bodies for debugging (comment out in production if noisy)
+    raw = await request.body()
+    logger.info("Raw body: %s", raw.decode("utf-8", errors="ignore"))
+    logger.info("Parsed auction keys: %s", list(auction.model_dump().keys()))
 
-    body = await request.json()
-    logger.info(f"Received request body: {body}")
-
-    # Create a sample solution
+    # Placeholder solution
     solution = Solution(
         id=1,
         prices={},
         trades=[],
         interactions=[]
     )
-
     return SolutionResponse(solutions=[solution])
+
+# Optional: run directly via `python api.py`
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("api:app", host="0.0.0.0", port=8000, reload=True)
+
