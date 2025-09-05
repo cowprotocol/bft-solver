@@ -60,7 +60,7 @@ class Order:
                 ],
                 "interactions": [],
             }
-        return {'solutions': [solution]}
+        return solution
 
 @app.post("/api/v1/solve")
 async def solve(request: Request):
@@ -73,6 +73,7 @@ async def solve(request: Request):
         n += 1
         order = Order.from_dict(order)
         solutions.append(order.naive_buffer_solution(n))
+    solutions = {"solutions": solutions}
     #logger.info(f"Found solutions: {solutions}")
     return JSONResponse(content=solutions, status_code=200)
 
