@@ -241,6 +241,7 @@ async def solve(request: Request, auction: Auction = Body(...)) -> SolutionRespo
     return SolutionResponse(solutions=[solution])
 
 @app.post("/api/v1/notify")
+async def notify(request: Request):
     body = await request.json()
     logger.info(f"Received request body: {body}")
     return JSONResponse(content={"message": "OK"}, status_code=200)
