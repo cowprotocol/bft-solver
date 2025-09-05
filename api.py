@@ -1,5 +1,6 @@
 # api.py
 from fastapi import FastAPI, Body, Request
+from fastapi.responses import JSONResponse
 from typing import Dict, List, Optional, Union, Literal, Any, Annotated
 from pydantic import BaseModel, Field, StringConstraints
 from enum import Enum
