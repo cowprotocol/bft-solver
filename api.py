@@ -73,7 +73,7 @@ async def solve(request: Request):
         n += 1
         order = Order.from_dict(order)
         solutions.append(order.naive_buffer_solution(n))
-    logger.info(f"Found solution: {solution}")
+    #logger.info(f"Found solutions: {solutions}")
     return JSONResponse(content=solutions, status_code=200)
 
 @app.post("/api/v1/notify")
