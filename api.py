@@ -45,13 +45,30 @@ class Order:
             data["class_"] = data.pop("class")
         return cls(**data)
 
+    def naive_buffer_solution(self) -> dict:
+        solution = {
+                "id": 1,
+                "prices": {
+                    self.sellToken: str(int(self.sellAmount) + 1),
+                    self.buyToken: self.buyAmount
+                },
+                "trades": [
+                    {"kind": "fulfillment",
+                    "order": self.uid,
+                    "fee": "0",
+                    "executedAmount": self.sellAmount}
+                ],
+                "interactions": [],
+            }
+        return solution
+
 @app.post("/api/v1/solve")
 async def solve(request: Request):
     raw = await request.body()
     body = json.loads(raw)
     logger.info(f"Received request json with keys: {list(body.keys())}")
     order = Order.from_dict(body.get('orders').pop())
-    return JSONResponse(content=empty_response, status_code=200)
+    return JSONResponse(content=order.naive_buffer_solution(), status_code=200)
 
 @app.post("/api/v1/notify")
 async def notify(request: Request):
