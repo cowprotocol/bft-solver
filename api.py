@@ -72,7 +72,7 @@ async def solve(request: Request):
     for order in body.get('orders')[:9]:
         n += 1
         order = Order.from_dict(order)
-        solutions.append(order.naive_buffer_solution(n)
+        solutions.append(order.naive_buffer_solution(n))
     logger.info(f"Found solution: {solution}")
     return JSONResponse(content=solutions, status_code=200)
 
