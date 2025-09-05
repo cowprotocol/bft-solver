@@ -45,9 +45,9 @@ class Order:
             data["class_"] = data.pop("class")
         return cls(**data)
 
-    def naive_buffer_solution(self) -> dict:
+    def naive_buffer_solution(self, n) -> dict:
         solution = {
-                "id": 1,
+                "id": n,
                 "prices": {
                     self.sellToken: str(int(self.sellAmount) + 1),
                     self.buyToken: self.buyAmount
@@ -67,10 +67,14 @@ async def solve(request: Request):
     raw = await request.body()
     body = json.loads(raw)
     logger.info(f"Received request {body['id']}")
-    order = Order.from_dict(body.get('orders')[0])
-    solution = order.naive_buffer_solution()
+    solutions = []
+    n = 0
+    for order in body.get('orders')[:9]:
+        n += 1
+        order = Order.from_dict(order)
+        solutions.append(order.naive_buffer_solution(n)
     logger.info(f"Found solution: {solution}")
-    return JSONResponse(content=solution, status_code=200)
+    return JSONResponse(content=solutions, status_code=200)
 
 @app.post("/api/v1/notify")
 async def notify(request: Request):
