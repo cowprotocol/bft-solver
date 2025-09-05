@@ -60,13 +60,13 @@ class Order:
                 ],
                 "interactions": [],
             }
-        return solution
+        return {'solutions': [solution]}
 
 @app.post("/api/v1/solve")
 async def solve(request: Request):
     raw = await request.body()
     body = json.loads(raw)
-    logger.info(f"Received request json with keys: {list(body.keys())}")
+    logger.info(f"Received request {body['id']}")
     order = Order.from_dict(body.get('orders').pop())
     return JSONResponse(content=order.naive_buffer_solution(), status_code=200)
 
