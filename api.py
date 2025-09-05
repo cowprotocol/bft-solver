@@ -13,7 +13,7 @@ empty_response = {
     "solutions" : []
 }
 
-@app.post("/api/v1/solve", response_model=SolutionResponse)
+@app.post("/api/v1/solve")
 async def solve(request: Request) -> SolutionResponse:
     raw = await request.body()
     body = json.loads(raw)
