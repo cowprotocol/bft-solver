@@ -67,8 +67,10 @@ async def solve(request: Request):
     raw = await request.body()
     body = json.loads(raw)
     logger.info(f"Received request {body['id']}")
-    order = Order.from_dict(body.get('orders').pop())
-    return JSONResponse(content=order.naive_buffer_solution(), status_code=200)
+    order = Order.from_dict(body.get('orders')[0])
+    solution = order.naive_buffer_solution()
+    logger.info(f"Found solution: {solution}")
+    return JSONResponse(content=solution, status_code=200)
 
 @app.post("/api/v1/notify")
 async def notify(request: Request):
